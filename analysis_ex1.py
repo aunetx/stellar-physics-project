@@ -130,8 +130,10 @@ fig.tight_layout()
 
 # %%
 
+subplots = [plt.subplots(2, 2, figsize=(12, 10), dpi=150) for i in range(4)]
+
 metallicity = 0.02
-for mass, steps in zip(
+for mass, steps, subplot in zip(
     [8, 100],
     [
         [
@@ -147,41 +149,52 @@ for mass, steps in zip(
             760,  # star end
         ],
     ],
+    [subplots, subplots],
 ):
-    for step in steps:
+    for step, (fig, ((ax1, ax2), (ax3, ax4))) in zip(steps, subplot):
         age = read_summary_for(8, 0.02)["age"].iloc[step]
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10), dpi=150)
-        fig.suptitle(f"step {step}, age {age:.2e} years, M_i = {mass} M☉, Z = {metallicity}")
+        # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10), dpi=150)
+        # fig.suptitle(f"step {step}, age {age:.2e} years, M_i = {mass} M☉, Z = {metallicity}")
 
         df_step = get_df_for_step(mass, metallicity, step)
         relative_radius = df_step["radius coordinate"] / df_step["radius coordinate"].iloc[0]
 
         # radius / density
-        ax1.plot(relative_radius, df_step["density"], c="black")
+        ax1.plot(relative_radius, df_step["density"] / df_step["density"].max(), label=f"{mass} M☉")
         ax1.set_xlabel("relative radius (radius / maximum radius)")
         ax1.set_ylabel("density (kg/m³)")
         ax1.set_xscale("log")
-        ax1.grid()
 
         # radius / temperature
-        ax2.plot(relative_radius, df_step["temperature"], c="black")
+        ax2.plot(
+            relative_radius,
+            df_step["temperature"] / df_step["temperature"].max(),
+            label=f"{mass} M☉",
+        )
         ax2.set_xlabel("relative radius (radius / maximum radius)")
         ax2.set_ylabel("temperature (K)")
         ax2.set_xscale("log")
-        ax2.grid()
 
         # radius / hydrogen mass fraction
-        ax3.plot(relative_radius, df_step["hydrogen mass fraction"], c="black")
+        ax3.plot(
+            relative_radius,
+            df_step["hydrogen mass fraction"] / df_step["hydrogen mass fraction"].max(),
+            label=f"{mass} M☉",
+        )
         ax3.set_xlabel("relative radius (radius / maximum radius)")
         ax3.set_ylabel("hydrogen mass fraction")
         ax3.set_xscale("log")
-        ax3.grid()
 
         # radius / luminosity
-        ax4.plot(relative_radius, df_step["luminosity"], c="black")
+        ax4.plot(
+            relative_radius, df_step["luminosity"] / df_step["luminosity"].max(), label=f"{mass} M☉"
+        )
         ax4.set_xlabel("relative radius (radius / maximum radius)")
         ax4.set_ylabel("luminosity (L☉)")
         ax4.set_xscale("log")
-        ax4.grid()
 
-        fig.tight_layout()
+for fig, ((ax1, ax2), (ax3, ax4)) in subplots:
+    for ax in [ax1, ax2, ax3, ax4]:
+        ax.legend()
+        ax.grid()
+    fig.tight_layout()
